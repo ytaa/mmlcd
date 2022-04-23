@@ -1,0 +1,15 @@
+[Unit]
+Description=USB function fs socket
+Requires=run-ffs_mmlcd.mount
+After=run-ffs_mmlcd.mount
+DefaultDependencies=no
+
+[Socket]
+ListenUSBFunction=/run/ffs_mmlcd
+Service=functionfs-mmlcd-daemon.service
+# we will get to ExecStartPost later
+ExecStartPost=/bin/gt enable mmlcd
+TriggerLimitIntervalSec=0
+
+[Install]
+WantedBy=usb-gadget.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Miniature Multifunctional Liquid Crystal Display
+Requires=mmlcd.service
+After=mmlcd.service
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=/root/bin/ffs-mmlcd
+USBFunctionDescriptors=/root/descriptors-ffs-mmlcd.bin
+USBFunctionStrings=/root/strings-ffs-mmlcd.bin

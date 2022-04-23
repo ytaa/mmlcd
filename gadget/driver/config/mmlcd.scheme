@@ -1,0 +1,31 @@
+attrs : 
+{
+    idVendor = 0xc0de
+    idProduct = 0xb10b;
+};
+strings = ( 
+    {
+        lang = 0x409;
+        serialnumber = "C0CAC01AADD511FE"
+        manufacturer = "Tristan Dobrowolski";
+        product = "Miniature Multi-functional Liquid Crystal Display";
+    }
+);
+functions : 
+{
+    ffs_mmlcd : 
+    {
+        instance = "mmlcd";
+        type = "ffs";
+    };
+};
+configs = ( 
+    {
+        id = 1;
+        name = "c";
+        functions = ( 
+            {
+                name = "ffs.mmlcd";
+                function = "ffs_mmlcd";
+            } );
+    } );

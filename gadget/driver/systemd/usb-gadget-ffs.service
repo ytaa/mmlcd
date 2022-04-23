@@ -1,0 +1,14 @@
+[Unit]
+Description=Load USB gadget scheme
+Requires=sys-kernel-config.mount
+After=sys-kernel-config.mount
+DefaultDependencies=no
+
+[Service]
+ExecStart=/bin/mmlcd_gadget_config
+RemainAfterExit=yes
+ExecStop=/bin/gt rm -rf mmlcd
+Type=simple
+
+[Install]
+WantedBy=usb-gadget.target

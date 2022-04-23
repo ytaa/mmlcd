@@ -1,0 +1,11 @@
+[Unit]
+    Description=Miniature Multifunctional Liquid Crystal Display controller service
+    After=network.target
+
+[Service]
+    ExecStart=/usr/bin/mmlcdd
+    SyslogIdentifier=mmlcdd
+    User=root
+
+[Install]
+    WantedBy=multi-user.target
