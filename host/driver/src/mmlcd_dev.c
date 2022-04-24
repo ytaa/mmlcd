@@ -143,7 +143,7 @@ static ssize_t dev_read(struct file *file, char __user *user_buffer, size_t leng
 			return 0;
 		}
 		default:{
-			pr_err("Failed to receive data (code %d)", bulk_retval);
+			pr_err("Failed to receive data (code %d)", -bulk_retval);
 			kfree(data);
 			return -EFAULT;
 		}
@@ -192,7 +192,7 @@ static ssize_t dev_write(struct file *file, const char __user *user_buffer, size
                        length,
                        &transmitted_length, 5000);
 	if(bulk_retval){
-		pr_err("Failed to send data (code %d)", bulk_retval);
+		pr_err("Failed to send data (code %d)", -bulk_retval);
 		ret = -ENODEV;
 		goto L_ERR;
 	}

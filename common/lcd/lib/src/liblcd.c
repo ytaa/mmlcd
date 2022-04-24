@@ -44,7 +44,6 @@ int liblcd_display_string_pos(const char * const string, uint8_t line, uint8_t p
     req.params.pos = pos;
 
     int res = write(lcd_daemon_socket, &req, sizeof(req));
-    printf("write res: %d\n", res);
     if(0 > res){
         perror("write");
         return -1;
