@@ -8,7 +8,7 @@ DefaultDependencies=no
 ExecStart=/bin/mmlcd_gadget_config
 RemainAfterExit=yes
 ExecStop=/bin/gt rm -rf mmlcd
-Type=simple
+Type=oneshot
 
 [Install]
 WantedBy=usb-gadget.target

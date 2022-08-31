@@ -35,7 +35,6 @@ install_scripts:
 install_systemd:
 	cp $(SYSTEMD_DIR)/ffs.socket /etc/systemd/system/
 	cp $(SYSTEMD_DIR)/functionfs-mmlcd-daemon.service /etc/systemd/system/
-	cp $(SYSTEMD_DIR)/run-ffs_mmlcdx.mount /etc/systemd/system/
 	cp $(SYSTEMD_DIR)/run-ffs_mmlcd.mount /etc/systemd/system/
 	cp $(SYSTEMD_DIR)/usb-gadget-ffs.service /etc/systemd/system/
 	cp $(SYSTEMD_DIR)/udc.rules /etc/udev/rules.d/

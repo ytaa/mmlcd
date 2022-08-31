@@ -1,7 +1,7 @@
 [Unit]
 Description=Mount FunctionFS instance
 Requires=usb-gadget-ffs.service
-After=run-ffs_mmlcdx.mount
+After=usb-gadget-ffs.service
 Before=ffs.socket
 
 [Mount]
@@ -11,3 +11,6 @@ Where=/run/ffs_mmlcd
 Type=functionfs
 Options=defaults
 TimeoutSec=5
+
+[Install]
+WantedBy=usb-gadget.target
