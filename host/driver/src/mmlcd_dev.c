@@ -16,14 +16,12 @@
 
 static int dev_open(struct inode *, struct file *);
 static int dev_release(struct inode *, struct file *);
-static ssize_t dev_read(struct file *, char __user *, size_t, loff_t *);
 static ssize_t dev_write(struct file *, const char __user *, size_t, loff_t *);
 static struct mmlcd_dev_ctx *get_ctx_by_inode(struct inode *);
 
 /* --- Global variables -------------------------------- */
 
 static struct file_operations mmlcd_fops = {
-	.read = dev_read,
 	.write = dev_write,
 	.open = dev_open,
 	.release = dev_release,
@@ -39,7 +37,7 @@ struct usb_class_driver mmlcd_dev_class_driver = {
 
 struct mmlcd_dev_ctx * mmlcd_dev_create_ctx(struct usb_interface *interface){
 	struct mmlcd_dev_ctx *ctx = NULL;
-	struct usb_endpoint_descriptor *bulk_in = NULL, *bulk_out = NULL;
+	struct usb_endpoint_descriptor *bulk_out = NULL;
 	int retval = 0;
 
 	if(!interface){
@@ -58,14 +56,13 @@ struct mmlcd_dev_ctx * mmlcd_dev_create_ctx(struct usb_interface *interface){
 	ctx->interface = interface;
 
 	retval = usb_find_common_endpoints(interface->cur_altsetting,
-			&bulk_in, &bulk_out, NULL, NULL);
+			NULL, &bulk_out, NULL, NULL);
 	if (retval) {
 		pr_err("Could not find both bulk-in and bulk-out endpoints");
 		mmlcd_dev_destroy_ctx(ctx);
 		return NULL;
 	}
 
-	ctx->bulk_in_endpointAddr = bulk_in->bEndpointAddress;
 	ctx->bulk_out_endpointAddr = bulk_out->bEndpointAddress;
 
 	return ctx;
@@ -106,60 +103,6 @@ static int dev_open(struct inode *inode, struct file *file){
 static int dev_release(struct inode *inode, struct file *file){
 	pr_debug("device_release");
 	return 0;
-}
-
-static ssize_t dev_read(struct file *file, char __user *user_buffer, size_t length, loff_t *offset){
-	char *data = NULL;
-	ssize_t ret = -1;
-	int bulk_retval = 0;
-	struct mmlcd_dev_ctx * ctx = NULL;
-	int received_length = 0u;
-	
-	//pr_debug("device_read");
-
-	if(0u != *offset){
-		return 0u;
-	}
-
-	ctx = file->private_data;
-	if(!ctx){
-		return -ENODEV;
-	}
-
-	data = kmalloc(MAX_USER_DATA_LEN, GFP_KERNEL);
-
-	/* do an immediate bulk read to receive data from the device */
-	bulk_retval = usb_bulk_msg (ctx->dev,
-                       usb_rcvbulkpipe(ctx->dev, ctx->bulk_in_endpointAddr),
-                       data,
-                       MAX_USER_DATA_LEN,
-                       &received_length, 5000);
-	switch(bulk_retval){
-		case 0:{
-			break;
-		}
-		case -EAGAIN:{
-			kfree(data);
-			return 0;
-		}
-		default:{
-			pr_err("Failed to receive data (code %d)", -bulk_retval);
-			kfree(data);
-			return -EFAULT;
-		}
-	}
-   
-	pr_debug("length=%lu, offset=%llu", length, *offset);
-	*offset = received_length;
-	if(0 == copy_to_user(user_buffer, data, received_length)){
-		ret = received_length;
-	}
-
-	pr_debug("ret: %ld, new_offset: %llu", ret, *offset);
-
-	kfree(data);
-
-	return ret;
 }
 
 static ssize_t dev_write(struct file *file, const char __user *user_buffer, size_t length, loff_t *offset){
