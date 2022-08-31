@@ -44,6 +44,10 @@ int daemon_ipc_setup(void){
     int flags = fcntl(listen_socket_fd, F_GETFL, 0);
     fcntl (listen_socket_fd, F_SETFL, flags | O_NONBLOCK);
 
+    /* allow addr reuse (needed by pigpiod) */
+    int opt = 1;
+    setsockopt(listen_socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
     /* bind socket to the socket file*/
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
@@ -96,9 +100,9 @@ int daemon_ipc_run(void){
     while(is_running){
         int nfds = epoll_wait(epoll_fd, events, EPOLL_MAX_EVENTS, EPOLL_WAIT_TIMEOUT);
         if (0 > nfds) {
-            syslog(LOG_ERR, "Failed to read epoll events");
-            daemon_ipc_stop();
-            break;
+            syslog(LOG_WARNING, "Failed to read epoll events");
+            /* lets try again */
+            continue;
         }
 
         for (uint32_t event_idx = 0; event_idx < (uint32_t)nfds; ++event_idx) {
