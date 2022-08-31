@@ -12,10 +12,14 @@ clean:
 	make -C $(KDIR)/build M=$(PWD) clean
 
 install:
+# copy module to kernel directories
 	cp $(MOD_NAME).ko $(KDIR)/kernel/drivers/misc
- ifeq (, $(shell grep $(MOD_NAME) /etc/modules))
- 	$(shell echo $(MOD_NAME) >> /etc/modules)
- endif
+	cp $(MOD_NAME).ko $(KDIR)/kernel
+# install module
+	rmmod $(MOD_NAME).ko | true
+	insmod $(MOD_NAME).ko
+# refresh module dependencies
+	depmod -a
 
 
 .PHONY: all clean install
