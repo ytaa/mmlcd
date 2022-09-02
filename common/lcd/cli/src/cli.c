@@ -16,6 +16,7 @@ const char * cli_cmd_strings[liblcd_ipc_cmd_count][2u] = {
     {"print", "p"},
     {"clear", "c"},
     {"backlight", "bl"},
+    {"get_button_state", "gb"}
 };
 
 /* private functions declarations */
@@ -29,6 +30,10 @@ int cli_handle_cmd_print(int argc, const char **argv);
 int cli_handle_cmd_clear();
 
 int cli_handle_cmd_backlight(int argc, const char **argv);
+
+int cli_handle_get_button_state(int argc, const char **argv);
+
+int cli_handle_poll_button_state();
 
 /* public functions definitions */
 
@@ -53,6 +58,10 @@ int cli_parse(int argc, const char **argv){
         }
         case liblcd_ipc_cmd_backlight:{
             res = cli_handle_cmd_backlight(argc, argv);
+            break;
+        }
+        case liblcd_ipc_cmd_get_btn_state:{
+            res = cli_handle_get_button_state(argc, argv);
             break;
         }
         default:{
@@ -126,4 +135,38 @@ int cli_handle_cmd_backlight(int argc, const char **argv){
     }
 
     return liblcd_backlight(enable);
+}
+
+int cli_handle_get_button_state(int argc, const char **argv){
+    if(3 > argc){
+        cli_print_usage(argv[0]);
+        return CLI_RES_INVALID_ARGS;
+    }
+
+    liblcd_ipc_btn_idx btn_idx = atoi(argv[2]) - 1;
+    liblcd_ipc_btn_state btn_state = liblcd_ipc_btn_state_invalid;
+
+    if(liblcd_ipc_btn_idx_invlid <= btn_idx || 0 > btn_idx){
+        cli_print_usage(argv[0]);
+        return CLI_RES_INVALID_ARGS;
+    }
+
+    (void) liblcd_get_btn_state(btn_idx, &btn_state);
+
+    switch(btn_state){
+        case liblcd_ipc_btn_released:{
+            printf("released\n");
+            break;
+        }
+        case liblcd_ipc_btn_pressed:{
+            printf("pressed\n");
+            break;
+        }
+        case liblcd_ipc_btn_state_invalid:
+        default:{
+            return -1;
+        }
+    }
+
+    return 0;
 }

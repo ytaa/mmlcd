@@ -1,7 +1,7 @@
 #include "daemon_ipc.h"
-#include "lcd_cmds.h"
+#include "cmds.h"
+#include "log.h"
 
-#include <syslog.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -37,7 +37,7 @@ int daemon_ipc_setup(void){
     /* create socket for listening */
     listen_socket_fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (0 > listen_socket_fd) {
-		syslog(LOG_ERR, "Failed to create socket");
+		slog(LOG_ERR, "Failed to create socket");
 		return listen_socket_fd;
 	}
 
@@ -55,14 +55,14 @@ int daemon_ipc_setup(void){
     unlink(LIBLCD_IPC_SOCKET_PATH);
     int ret = bind(listen_socket_fd, (struct sockaddr *)&addr, sizeof(addr));
     if (0 > ret) {
-        syslog(LOG_ERR, "Failed to bind socket");
+        slog(LOG_ERR, "Failed to bind socket");
         return ret;
     }
 
     /* set socket file permissions */
     ret =  chmod(LIBLCD_IPC_SOCKET_PATH, S_IRWXU | S_IRWXG | S_IRWXO);
     if(0 > ret){
-        syslog(LOG_ERR, "Failed to set socket file permissions");
+        slog(LOG_ERR, "Failed to set socket file permissions");
         return ret;
     }
 
@@ -74,14 +74,14 @@ int daemon_ipc_run(void){
    
     if(0 > ret){
         perror("listen");
-        syslog(LOG_ERR, "Failed to listen on socket");
+        slog(LOG_ERR, "Failed to listen on socket");
         return ret;
     }
 
     /* setup epoll */
     epoll_fd = epoll_create1(0);
     if (0 > epoll_fd) {
-        syslog(LOG_ERR, "Failed to create epoll");
+        slog(LOG_ERR, "Failed to create epoll");
         return epoll_fd;
     }
 
@@ -91,7 +91,7 @@ int daemon_ipc_run(void){
     epoll_event.data.fd = listen_socket_fd;
     ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_socket_fd, &epoll_event);
     if (0 > ret) {
-        syslog(LOG_ERR, "Failed to add listen socket to epoll");
+        slog(LOG_ERR, "Failed to add listen socket to epoll");
         return ret;
     }
 
@@ -100,7 +100,7 @@ int daemon_ipc_run(void){
     while(is_running){
         int nfds = epoll_wait(epoll_fd, events, EPOLL_MAX_EVENTS, EPOLL_WAIT_TIMEOUT);
         if (0 > nfds) {
-            syslog(LOG_WARNING, "Failed to read epoll events");
+            slog(LOG_WARNING, "Failed to read epoll events");
             /* lets try again */
             continue;
         }
@@ -126,7 +126,7 @@ int daemon_ipc_run(void){
 }
 
 void daemon_ipc_stop(void){
-    syslog(LOG_INFO, "Stopping epoll");
+    slog(LOG_INFO, "Stopping epoll");
     is_running = false;
 }
 
@@ -139,7 +139,7 @@ void daemon_ipc_cleanup(void){
 /* private functions definitions */
 
 void daemon_ipc_con_add(int fd){
-    syslog(LOG_INFO, "Opening new connection");
+    slog(LOG_DEBUG, "Opening new connection");
 
     struct sockaddr_in client_address = {0};
     struct epoll_event epoll_event = {0};
@@ -147,7 +147,7 @@ void daemon_ipc_con_add(int fd){
     int event_socket = accept(fd,
                         (struct sockaddr *) &client_address, &client_address_len);
     if (0 > event_socket) {
-        syslog(LOG_ERR, "Failed to accept incoming connection");
+        slog(LOG_ERR, "Failed to accept incoming connection");
         return;
     }
     
@@ -159,21 +159,21 @@ void daemon_ipc_con_add(int fd){
     epoll_event.data.fd = event_socket;
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event_socket,
                 &epoll_event) == -1) {
-        syslog(LOG_ERR, "Failed to add client socket to epoll");
+        slog(LOG_ERR, "Failed to add client socket to epoll");
         close(event_socket);
         return;
     }
 
-    syslog(LOG_INFO, "New connection established? - fd: %d", event_socket);
+    slog(LOG_DEBUG, "New connection established? - fd: %d", event_socket);
 }
 
 void daemon_ipc_con_close(int fd){
     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
     close (fd);
-    syslog(LOG_INFO, "Connection closed - fd: %d", fd);
+    slog(LOG_DEBUG, "Connection closed - fd: %d", fd);
 }
 
 void daemon_ipc_con_in(int fd){
-    syslog(LOG_INFO, "Connection in - fd: %d", fd);
-    (void)lcd_cmds_handle_request(fd);
+    slog(LOG_DEBUG, "Connection in - fd: %d", fd);
+    (void)cmds_handle_request(fd);
 }

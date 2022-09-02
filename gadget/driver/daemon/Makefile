@@ -11,7 +11,6 @@ BUILDDIR = build
 SRCDIR = src
 INCDIR = inc
 
-KDIR = /lib/modules/$(shell uname -r)
 INCDIRS_FLAGS = -I$(INCDIR) -I$(KDIR)/source/tools/include
 
 SOURCES = $(wildcard $(SRCDIR)/*.c)
@@ -31,4 +30,5 @@ clean:
 	rm -rf $(EXECDIR) $(BUILDDIR)
 
 install:
+	systemctl stop functionfs-mmlcd-daemon || true 
 	cp -f $(EXECDIR)/$(EXEC) /root/bin

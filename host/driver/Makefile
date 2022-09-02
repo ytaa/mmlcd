@@ -1,7 +1,7 @@
 KDIR = /lib/modules/$(shell uname -r)
 MOD_NAME = mmlcd
 obj-m += $(MOD_NAME).o
-mmlcd-objs := ./src/mmlcd.o ./src/mmlcd_dev.o
+mmlcd-objs := ./src/mmlcd.o ./src/mmlcd_dev.o ./src/mmlcd_proc.o
 EXTRA_CFLAGS=-I$(PWD)/inc -DDEBUG
 CONFIG_DYNAMIC_DEBUG=y
 

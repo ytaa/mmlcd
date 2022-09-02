@@ -15,7 +15,11 @@ OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(BUILDDIR)/%.o)
 DEPS = $(wildcard $(INCDIR)/*.h)
 
 ifndef TARGET_PLATFORM
+ifndef MMLCD_TARGET_PLATFORM
  $(error In order to build this program you need to provide TARGET_PLATFORM variable)
+else
+ TARGET_PLATFORM = $(MMLCD_TARGET_PLATFORM)
+endif
 endif
 
 # Platform specific actions
@@ -55,9 +59,11 @@ clean:
 	rm -rf $(EXECDIR) $(BUILDDIR) $(HALBUILDIR)
 
 install: $(EXECDIR)/$(EXEC)
+	systemctl stop mmlcd || true
 	cp $(EXECDIR)/$(EXEC) /usr/bin
 	cp service/mmlcd.service /lib/systemd/system
 	systemctl enable mmlcd
+	systemctl restart mmlcd
 
 uninstall:
 	systemctl disable mmlcd
