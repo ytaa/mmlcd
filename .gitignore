@@ -1,5 +1,6 @@
 build/
 out/
+.vscode/
 *.o
 *.mod
 *.mod.c
