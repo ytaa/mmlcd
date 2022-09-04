@@ -12,6 +12,7 @@
 
 /* --- Macros ------------------------------------------ */
 
+#define DEFAULT_MMLCD_ADDRESS 0u
 #define DEFAULT_BTN_STATE_POLL_INTERVAL 50u /* ms */
 
 /* --- Private functions declarations ------------------ */
@@ -20,13 +21,15 @@ void* btn_poll_thread(void* unused);
 
 /* --- Global variables -------------------------------- */
 
+static liblcd_ipc_mmlcd_addr g_mmlcd_addr = DEFAULT_MMLCD_ADDRESS;
+
 static int g_lcd_daemon_socket = -1;
 
-liblcd_btn_event_callback g_btn_ev_cbk = NULL;
-bool g_is_btn_poll_th_runinning = false;
-pthread_t g_btn_poll_th_id = -1;
+static liblcd_btn_event_callback g_btn_ev_cbk = NULL;
+static bool g_is_btn_poll_th_runinning = false;
+static pthread_t g_btn_poll_th_id = -1;
 
-liblcd_ipc_btn_state g_prev_btn_state[liblcd_ipc_btn_count];
+static liblcd_ipc_btn_state g_prev_btn_state[liblcd_ipc_btn_count];
 
 /* --- Public functions definitions -------------------- */
 
@@ -53,9 +56,15 @@ void liblcd_deinit(void){
     close(g_lcd_daemon_socket);
 }
 
+void liblcd_set_addr(liblcd_ipc_mmlcd_addr addr){
+    g_mmlcd_addr = addr;
+}
+
 int liblcd_display_string_pos(const char * const string, uint8_t line, uint8_t pos){
     liblcd_ipc_print_req req = {0};
-    req.cmd = liblcd_ipc_cmd_print;
+    req.head.cmd = liblcd_ipc_cmd_print;
+    req.head.addr = g_mmlcd_addr;
+
 
     /* copy string to the request buffer */
     strncpy(req.params.str, string, LIBLCD_IPC_PRINT_STRING_SIZE - 1u /* subtract 1 to assure proper null termination */);
@@ -73,9 +82,11 @@ int liblcd_display_string_pos(const char * const string, uint8_t line, uint8_t p
 
 /* clear lcd and set to home */
 int liblcd_clear() {
-    liblcd_ipc_cmd cmd = liblcd_ipc_cmd_clear;
+    liblcd_ipc_req_head head = {0};
+    head.cmd = liblcd_ipc_cmd_clear;
+    head.addr = g_mmlcd_addr;
 
-    if(0 > write(g_lcd_daemon_socket, &cmd, sizeof(cmd))){ 
+    if(0 > write(g_lcd_daemon_socket, &head, sizeof(head))){ 
         perror("write");
         return -1;
     }
@@ -86,7 +97,10 @@ int liblcd_clear() {
 /* backlight on/off */
 int liblcd_backlight(bool enable){
     liblcd_ipc_backlight_req req = {
-        .cmd = liblcd_ipc_cmd_backlight,
+        .head = {
+            .addr = g_mmlcd_addr,
+            .cmd = liblcd_ipc_cmd_backlight,
+        },
         .params = {.enable = (uint8_t) enable}
     };
 
@@ -104,7 +118,10 @@ int liblcd_get_btn_state(liblcd_ipc_btn_idx idx, liblcd_ipc_btn_state *state){
     }
 
     liblcd_ipc_get_btn_state_req req = {
-        .cmd = liblcd_ipc_cmd_get_btn_state,
+        .head = {
+            .addr = g_mmlcd_addr,
+            .cmd = liblcd_ipc_cmd_get_btn_state,
+        },
         .params = {.idx = idx}
     };
 

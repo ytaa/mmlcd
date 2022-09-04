@@ -8,69 +8,56 @@
 #include <stdint.h>
 #include <libmmlcd_ipc.h>
 
-static int lcd_dev = -1;
-
 /* private functions declarations */
-int cmds_handle_print(int client_fd);
-int cmds_handle_clear(int client_fd);
-int cmds_handle_backlight(int client_fd);
-int cmds_handle_get_btn_state(int client_fd);
+int cmds_handle_print(int client_fd, liblcd_ipc_mmlcd_addr addr);
+int cmds_handle_clear(int client_fd, liblcd_ipc_mmlcd_addr addr);
+int cmds_handle_backlight(int client_fd, liblcd_ipc_mmlcd_addr addr);
+int cmds_handle_get_btn_state(int client_fd, liblcd_ipc_mmlcd_addr addr);
 
 /* public functions definitions */
 int cmds_init(void){
-    if(hal_btn_init()){
-        slog(LOG_ERR, "Failed to initialize buttons");
+    if(hal_init()){
+        slog(LOG_ERR, "Failed to initialize mmlcd HAL");
         return -1;
     }
-
-    lcd_dev = hal_lcd_init();
-
-    if(0 > lcd_dev){
-        slog(LOG_ERR, "Failed to open LCD device");
-        return lcd_dev;
-    }
-
-    return hal_lcd_setup(lcd_dev);
+    return 0;
 }
 
 void cmds_deinit(void){
-    hal_lcd_deinit(lcd_dev);
-    lcd_dev = -1;
-
-    hal_btn_deinit();
+    hal_deinit();
 }
 
 int cmds_handle_request(int client_fd){
     int res = 0;
 
-    liblcd_ipc_cmd cmd = liblcd_ipc_cmd_invalid;
-    uint32_t read_size = ipc_socket_timeout_read(client_fd, &cmd, sizeof(cmd));
+    liblcd_ipc_req_head head = {.addr = 0, .cmd = liblcd_ipc_cmd_invalid};
+    uint32_t read_size = ipc_socket_timeout_read(client_fd, &head, sizeof(head));
     if(0u == read_size){
         /* Connection closed by the client - do nothing */
         return 0;
     }
-    else if(sizeof(cmd) != read_size){
+    else if(sizeof(head) != read_size){
         slog(LOG_ERR, "Failed to read client request command");
         return -1;
     }
 
-    slog(LOG_DEBUG, "Client request received for command: %d", cmd);
+    slog(LOG_DEBUG, "Client request received for command: %d", head.cmd);
 
-    switch(cmd){
+    switch(head.cmd){
         case liblcd_ipc_cmd_print:{
-            res = cmds_handle_print(client_fd);
+            res = cmds_handle_print(client_fd, head.addr);
             break;
         }
         case liblcd_ipc_cmd_clear:{
-            res = cmds_handle_clear(client_fd);
+            res = cmds_handle_clear(client_fd, head.addr);
             break;
         }
         case liblcd_ipc_cmd_backlight:{
-            res = cmds_handle_backlight(client_fd);
+            res = cmds_handle_backlight(client_fd, head.addr);
             break;
         }
         case liblcd_ipc_cmd_get_btn_state:{
-            res = cmds_handle_get_btn_state(client_fd);
+            res = cmds_handle_get_btn_state(client_fd, head.addr);
             break;
         }
         default:{
@@ -84,7 +71,7 @@ int cmds_handle_request(int client_fd){
 
 /* private functions definittions */
 
-int cmds_handle_print(int client_fd){
+int cmds_handle_print(int client_fd, liblcd_ipc_mmlcd_addr addr){
     liblcd_ipc_print_params req = {0};
     
     if(ipc_read_req_params(client_fd, &req, sizeof(req))){
@@ -92,13 +79,13 @@ int cmds_handle_print(int client_fd){
         return -1;
     }
     
-    return hal_lcd_display_string_pos(lcd_dev, req.str, req.line, req.pos);
+    return hal_lcd_display_string_pos(addr, req.str, req.line, req.pos);
 }
-int cmds_handle_clear(int client_fd){
+int cmds_handle_clear(int client_fd, liblcd_ipc_mmlcd_addr addr){
     (void)client_fd;
-    return hal_lcd_clear(lcd_dev);
+    return hal_lcd_clear(addr);
 }
-int cmds_handle_backlight(int client_fd){
+int cmds_handle_backlight(int client_fd, liblcd_ipc_mmlcd_addr addr){
     liblcd_ipc_backlight_params req = {0};
 
     if(ipc_read_req_params(client_fd, &req, sizeof(req))){
@@ -106,10 +93,10 @@ int cmds_handle_backlight(int client_fd){
         return -1;
     }
 
-    return hal_lcd_backlight(lcd_dev, req.enable);
+    return hal_lcd_backlight(addr, req.enable);
 }
 
-int cmds_handle_get_btn_state(int client_fd){
+int cmds_handle_get_btn_state(int client_fd, liblcd_ipc_mmlcd_addr addr){
     liblcd_ipc_get_btn_state_params req = {0};
     liblcd_ipc_btn_state state = liblcd_ipc_btn_state_invalid;
     int res = 0;
@@ -120,7 +107,7 @@ int cmds_handle_get_btn_state(int client_fd){
         return -1;
     }
 
-    if((res = hal_btn_get_state(req.idx, &state))){
+    if((res = hal_btn_get_state(addr, req.idx, &state))){
         slog(LOG_ERR, "Failed to read button state");
         return res;
     }

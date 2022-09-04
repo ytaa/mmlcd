@@ -19,6 +19,8 @@ int liblcd_init(void);
 
 void liblcd_deinit(void);
 
+void liblcd_set_addr(liblcd_ipc_mmlcd_addr addr);
+
 int liblcd_display_string_pos(const char * const string, uint8_t line, uint8_t pos);
 
 int liblcd_clear();

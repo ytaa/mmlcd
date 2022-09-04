@@ -8,6 +8,8 @@
 
 /* --- Type definitions -------------------------------- */
 
+typedef unsigned char liblcd_ipc_mmlcd_addr;
+
 typedef enum {
     liblcd_ipc_cmd_print = 0,
     liblcd_ipc_cmd_clear,
@@ -16,6 +18,13 @@ typedef enum {
     liblcd_ipc_cmd_count,
     liblcd_ipc_cmd_invalid = liblcd_ipc_cmd_count
 } liblcd_ipc_cmd;
+
+struct liblcd_ipc_req_head_s {
+    liblcd_ipc_mmlcd_addr addr;
+    liblcd_ipc_cmd cmd;
+};
+
+typedef struct liblcd_ipc_req_head_s liblcd_ipc_req_head;
 
 struct liblcd_ipc_print_params_s {
     char str[LIBLCD_IPC_PRINT_STRING_SIZE];
@@ -26,7 +35,7 @@ struct liblcd_ipc_print_params_s {
 typedef struct liblcd_ipc_print_params_s liblcd_ipc_print_params;
 
 struct liblcd_ipc_print_req_s {
-    liblcd_ipc_cmd cmd;
+    liblcd_ipc_req_head head;
     liblcd_ipc_print_params params;
 }__attribute__((packed));
 
@@ -39,7 +48,7 @@ struct liblcd_ipc_backlight_params_s {
 typedef struct liblcd_ipc_backlight_params_s liblcd_ipc_backlight_params;
 
 struct liblcd_ipc_backlight_req_s {
-    liblcd_ipc_cmd cmd;
+    liblcd_ipc_req_head head;
     liblcd_ipc_backlight_params params;
 }__attribute__((packed));
 
@@ -79,7 +88,7 @@ struct liblcd_ipc_get_btn_state_params_s {
 typedef struct liblcd_ipc_get_btn_state_params_s liblcd_ipc_get_btn_state_params;
 
 struct liblcd_ipc_get_btn_state_req_s {
-    liblcd_ipc_cmd cmd;
+    liblcd_ipc_req_head head;
     liblcd_ipc_get_btn_state_params params;
 }__attribute__((packed));
 
