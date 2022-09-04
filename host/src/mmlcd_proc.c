@@ -96,7 +96,7 @@ void mmlcd_proc_int_in_irq(struct urb *urb){
 	}
 
 	ev = ctx->int_data;
-	pr_info("Reveiced interrupt data: {btn_idx: %d, btn_state: %d}\n", ev->idx, ev->state);
+	pr_debug("Reveiced interrupt data: {btn_idx: %d, btn_state: %d}\n", ev->idx, ev->state);
 	ctx->last_btn_state[ev->idx] = ev->state;
 
 resubmit:
