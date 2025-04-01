@@ -174,7 +174,7 @@ int lcd_clear(int handle) {
     lcd_write(handle, LCD_CMD_CLEARDISPLAY);
     lcd_write(handle, LCD_CMD_RETURNHOME);
 
-	return 0;
+    return 0;
 }
 
 /* backlight on/off */

@@ -38,8 +38,8 @@ int liblcd_init(void){
     g_lcd_daemon_socket = socket(PF_UNIX, SOCK_STREAM, 0);
     if (0 > g_lcd_daemon_socket) {
         perror("socket");
-		return -1;
-	}
+        return -1;
+    }
 
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
@@ -91,7 +91,7 @@ int liblcd_clear() {
         return -1;
     }
     
-	return 0;
+    return 0;
 }
 
 /* backlight on/off */

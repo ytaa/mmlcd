@@ -37,9 +37,9 @@ int daemon_ipc_setup(void){
     /* create socket for listening */
     listen_socket_fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (0 > listen_socket_fd) {
-		slog(LOG_ERR, "Failed to create socket");
-		return listen_socket_fd;
-	}
+        slog(LOG_ERR, "Failed to create socket");
+        return listen_socket_fd;
+    }
 
     int flags = fcntl(listen_socket_fd, F_GETFL, 0);
     fcntl (listen_socket_fd, F_SETFL, flags | O_NONBLOCK);
